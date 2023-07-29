@@ -1,58 +1,86 @@
 const Product = require('../models/product');
-const Cart=require('../models/cart')
+const Cart = require('../models/cart')
 
-exports.getProducts = (req, res, next) => {
-  Product.fetchAll()
-  .then(([rows,fieldData])=>{
-    res.render('shop/product-list', {
-      prods: rows,
-      pageTitle: 'All Products',
-      path: '/products'
-    });
-  })
-  .catch(err=>console.log(err))
+exports.getProducts = async (req, res, next) => {
+    try {
+      const product =  await Product.findAll()
+      res.render('shop/product-list', {
+        prods: product,
+        pageTitle: 'All Products',
+        path: '/products'
+      })
+    } catch (err) {
+      console.log(err);
+    }
 };
 
-exports.getproduct=(req,res,next)=>{
-  const proId=req.params.productId;
-  Product.findById(proId).then(([product])=>{
-    res.render('shop/product-detail',{
-      product:product[0],
-      pageTitle:product.title,
-      path:'/products'
-    });
-  })
-  .catch(err=>console.log(err))
-  };
- 
+exports.getproduct = async (req, res, next) => {
+  try {
+      const proId = req.params.productId;
+      const product = await Product.findOne({ where: { id: proId } });
+      res.render('shop/product-detail', {
+          product: product,
+          pageTitle: product.title,
+          path: '/products'
+      });
+  } catch (err) {
+      console.error('Error fetching product:', err);
+  }  
+};
 
 
-exports.getIndex = (req, res, next) => {
-  Product.fetchAll()
-  .then(([rows,fieldData])=>{
+
+exports.getIndex = async (req, res, next) => {
+  try {
+    const product =  await Product.findAll()
     res.render('shop/index', {
-      prods: rows,
+      prods: product,
       pageTitle: 'Shop',
       path: '/'
-    });
-  })
-  .catch(err=>console.log(err))
-
+    })
+  } catch (err) {
+    console.log(err);
+  }
 };
 
-exports.getCart = (req, res, next) => {
+exports.getCart = async (req, res, next) => {
+  try{
+   const Cart=await req.user.getCart()
+   const Procart= await Cart.getProducts() 
   res.render('shop/cart', {
     path: '/cart',
-    pageTitle: 'Your Cart'
+    pageTitle: 'Your Cart',
+    products: Procart
   });
+}catch(err){
+  console.log(err)
+}
 };
 
-exports.postCart=(req, res, next) => {
+exports.postCart =async (req, res, next) => {
+ try{
   const proId=req.body.productId;
-  Product.findById(proId,(product)=>{
-    Cart.addProduct(proId,product.price); 
-  });
+  const Cart = await req.user.getCart()
+  const Procart= await Cart.getProducts({where:{id:proId}});
+  const Prod=await Product.findOne({where:{id:proId}});
+  let  product;
+  if(Procart.length>0){
+    product= Procart[0]
+  }
+  let newQuantity=1;
+  if(product){
+const oldQuantity=  product.cartitem.Quantity;
+newQuantity= oldQuantity +1;
+Cart.addProduct(Prod, {through: {Quantity:newQuantity}})
+  }
+  Cart.addProduct(Prod, {through: {Quantity:newQuantity}})
+       
+
   res.redirect('/cart');
+ } catch(err){
+  console.log(err)
+ }
+  
 };
 
 exports.getOrders = (req, res, next) => {

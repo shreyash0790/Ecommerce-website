@@ -14,8 +14,12 @@ exports.postAddProduct = async (req, res, next) => {
     const price = req.body.price;
     const imageUrl = req.body.imageUrl;
     const description = req.body.description;
-    const product = new Product(null, title, imageUrl, description, price);
-    await product.save();
+    await req.user.createProduct({
+    title:title,
+    price:price,
+    imageUrl:imageUrl,
+    description:description
+   })
     res.redirect('/');
   } catch (err) {
     console.log(err);
@@ -29,7 +33,8 @@ exports.getEditProduct = async (req, res, next) => {
       return res.redirect('/');
     }
     const proId = req.params.productId;
-    const product = await Product.findById(proId);
+    const products=await req.user.getProducts({where:{id:proId}});
+    const product = products[0];
     if (!product) {
       return res.redirect('/');
     }
@@ -37,7 +42,7 @@ exports.getEditProduct = async (req, res, next) => {
       pageTitle: 'Edit Product',
       path: '/admin/edit-product',
       editing: editMode,
-      product: product[0]
+      product: product
     });
   } catch (err) {
     console.log(err);
@@ -51,8 +56,17 @@ exports.postEditProduct = async (req, res, next) => {
     const updatedPrice = req.body.price;
     const updatedImageUrl = req.body.imageUrl;
     const updatedDesc = req.body.description;
-    const updatedProduct = new Product(proId, updatedTitle, updatedImageUrl, updatedDesc, updatedPrice);
-    await updatedProduct.save();
+    await Product.update(
+      {
+        title: updatedTitle,
+        price: updatedPrice,
+        imageUrl: updatedImageUrl,
+        description: updatedDesc,
+      },
+      {
+        where: { id: proId },
+      }
+    );
     res.redirect('/admin/products');
   } catch (err) {
     console.log(err);
@@ -62,7 +76,8 @@ exports.postEditProduct = async (req, res, next) => {
 exports.deleteproducts = async (req, res, next) => {
   try {
     const proId = req.body.productId;
-    await Product.deleteproductbyID(proId);
+    const product = await Product.findOne({where:{id:proId}});
+  await  product.destroy();
     res.redirect('/admin/products');
   } catch (err) {
     console.log(err);
@@ -71,9 +86,9 @@ exports.deleteproducts = async (req, res, next) => {
 
 exports.getProducts = async (req, res, next) => {
   try {
-    const products = await Product.fetchAll();
+   const products=await req.user.getProducts()
     res.render('admin/products', {
-      prods: products[0],
+      prods: products,
       pageTitle: 'Admin Products',
       path: '/admin/products'
     });

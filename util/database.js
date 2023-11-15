@@ -1,6 +1,26 @@
-const Sequelize= require('sequelize');
+const mongodb = require('mongodb');
+const MongoClient = mongodb.MongoClient;
 
-const sequelize=new Sequelize('node-complete','root','nodepro',
-{dialect:'mysql',host:'localhost'});
+let _db;
 
-module.exports=sequelize;
+const MongoConnect=callback=>{
+    MongoClient.connect('mongodb+srv://shreyash:bENuEsrx2RG4UHGj@test1.uhi7exl.mongodb.net/shop?retryWrites=true&w=majority')
+    .then(Client=> {
+        console.log("Connected");
+        _db=Client.db()
+        callback();
+    })
+    .catch(err =>{
+        console.log(err)
+    } )
+}
+
+const getDb=()=>{
+    if(_db){
+        return _db
+    }
+    throw "no database found";
+}
+
+exports.MongoConnect=MongoConnect;
+exports.getDb=getDb;

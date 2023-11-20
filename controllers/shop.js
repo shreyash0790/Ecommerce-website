@@ -1,5 +1,5 @@
 const Product = require('../models/product');
-// const Cart = require('../models/cart')
+
 
 exports.getProducts = async (req, res, next) => {
     try {
@@ -43,29 +43,26 @@ exports.getIndex = async (req, res, next) => {
   }
 };
 
-// exports.getCart = async (req, res, next) => {
-//   try{
-//    const Cart=await req.user.getCart()
-//    const Procart= await Cart.getProducts() 
-//   res.render('shop/cart', {
-//     path: '/cart',
-//     pageTitle: 'Your Cart',
-//     products: Procart
-//   });
-// }catch(err){
-//   console.log(err)
-// }
-// };
+exports.getCart = async (req, res, next) => {
+  try{
+   const Cart=await req.user.getCart()
+ 
+  res.render('shop/cart', {
+    path: '/cart',
+    pageTitle: 'Your Cart',
+    products: Cart
+  });
+}catch(err){
+  console.log(err)
+}
+};
 
 exports.postCart = async (req, res, next) => {
   try {
     const proId = req.body.productId;
- Product.findById(proId)
- .then(product=>{
-  return req.user.addToCart(product)
- })
- .then(result=>console.log(result))
-
+    const product = await Product.findById(proId);
+    const result = await req.user.addToCart(product);
+    console.log(result);
     res.redirect('/cart');
   } catch (err) {
     console.log(err);
@@ -85,3 +82,13 @@ exports.postCart = async (req, res, next) => {
 //     pageTitle: 'Checkout'
 //   });
 // };
+
+exports.postCartDeleteProduct = async (req, res, next) => {
+  try {
+    const proId = req.body.productId;
+    const deletedProduct = await req.user.deleteCartitems(proId)
+    res.redirect('/cart');
+  } catch (err) {
+    console.log(err);
+  }
+};

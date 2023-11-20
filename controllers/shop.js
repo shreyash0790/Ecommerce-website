@@ -57,28 +57,20 @@ exports.getIndex = async (req, res, next) => {
 // }
 // };
 
-// exports.postCart = async (req, res, next) => {
-//   try {
-//     const proId = req.body.productId;
-//     const Cart = await req.user.getCart();
-//     const Procart = await Cart.getProducts({ where: { id: proId } });
-//     const Prod = await Product.findOne({ where: { id: proId } });
-//     let product;
-//     if (Procart.length > 0) {
-//       product = Procart[0];
-//     }
-//     let newQuantity = 1;
-//     if (product) {
-//       const oldQuantity = product.CartItem.Quantity;
-//       newQuantity = oldQuantity + 1;
-//     }
-//     await Cart.addProduct(Prod, { through: { Quantity: newQuantity } });
+exports.postCart = async (req, res, next) => {
+  try {
+    const proId = req.body.productId;
+ Product.findById(proId)
+ .then(product=>{
+  return req.user.addToCart(product)
+ })
+ .then(result=>console.log(result))
 
-//     res.redirect('/cart');
-//   } catch (err) {
-//     console.log(err);
-//   }
-// };
+    res.redirect('/cart');
+  } catch (err) {
+    console.log(err);
+  }
+};
 
 // exports.getOrders = (req, res, next) => {
 //   res.render('shop/orders', {

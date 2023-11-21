@@ -62,26 +62,33 @@ exports.postCart = async (req, res, next) => {
     const proId = req.body.productId;
     const product = await Product.findById(proId);
     const result = await req.user.addToCart(product);
-    console.log(result);
     res.redirect('/cart');
   } catch (err) {
     console.log(err);
   }
 };
 
-// exports.getOrders = (req, res, next) => {
-//   res.render('shop/orders', {
-//     path: '/orders',
-//     pageTitle: 'Your Orders'
-//   });
-// };
 
-// exports.getCheckout = (req, res, next) => {
-//   res.render('shop/checkout', {
-//     path: '/checkout',
-//     pageTitle: 'Checkout'
-//   });
-// };
+
+
+
+exports.postOrders = async (req, res, next) => {
+
+  const PostOrder=await req.user.addOrder()
+  console.log(PostOrder)
+  res.redirect('/orders');
+};
+
+exports.getOrder = async(req, res, next) => {
+const getOrders= await req.user.getOrders()
+  res.render('shop/orders', {
+    path: '/orders',
+    pageTitle: 'Your Orders',
+    orders:getOrders
+  });
+};
+
+
 
 exports.postCartDeleteProduct = async (req, res, next) => {
   try {

@@ -1,11 +1,12 @@
 const mongodb = require('mongodb');
+const { get } = require('../routes/admin');
 const getDb = require('../util/database').getDb
 
 const ObjectId = mongodb.ObjectId
 
 class User {
-    constructor(username, email, cart, id) {
-        this.name = username;
+    constructor(name, email, cart, id) {
+        this.name = name;
         this.email = email;
         this.cart = cart // {items : []}
         this._id = id
@@ -72,6 +73,43 @@ class User {
 
     }
 
+    addOrder() {
+        console.log('User ID:', this._id);
+        console.log('Username:', this.name);
+        const db = getDb();
+        return this.getCart()               // adding product info with user data in orders collection
+            .then(products => {
+                const order = {
+                    items: products,
+                    user: {
+                        _id: new ObjectId(this._id),
+                        name: this.name,
+                        email: this.email
+                    }
+                }
+                return db
+                    .collection('orders')
+                    .insertOne(order)
+            })
+            .then(result => {
+                this.cart = { items: [] } //clearing cart  from user object
+                return db
+                    .collection('users')
+                    .updateOne(
+                        { _id: new ObjectId(this._id) },
+                        { $set: { cart: { items: [] } } }       //removing cart from database 
+                    )
+            })
+    }
+
+
+    getOrders() {
+        const db=getDb()
+        return db.collection('orders').find({'user._id': new ObjectId(this._id)})
+        .toArray();
+
+    }
+
     static findUserbyID(userId) {
         const db = getDb()
         return db.collection('users')
@@ -87,15 +125,6 @@ class User {
 
 
 }
-
-
-
-
-
-
-
-
-
 
 
 module.exports = User;
